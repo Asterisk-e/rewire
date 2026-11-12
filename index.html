@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7f4">
+  <meta name="description" content="A local-model chat workspace with draggable capability cards.">
+  <title>Local Model Studio</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-row">
+        <div class="brand-mark" aria-hidden="true">LM</div>
+        <div class="brand-copy"><strong>Local Studio</strong><span>Model workspace</span></div>
+        <button class="icon-button mobile-only" id="closeSidebar" aria-label="Close sidebar">×</button>
+      </div>
+
+      <button class="new-chat-button" id="newChatButton"><span class="plus">＋</span> New chat</button>
+
+      <section class="sidebar-section">
+        <div class="section-heading">
+          <span>CAPABILITIES</span>
+          <span class="section-hint">DRAG INTO CHAT</span>
+        </div>
+        <p class="sidebar-intro">Cards add explicit instructions to the next model request. Add only what you need.</p>
+
+        <div class="capability-list" id="capabilityList">
+          <button class="capability-card" draggable="true" data-capability="html" aria-pressed="false">
+            <span class="capability-tag tag-html">HTML</span>
+            <span class="capability-copy"><strong>HTML Coding</strong><small>Structure and semantic markup</small></span>
+            <span class="card-add" aria-hidden="true">＋</span>
+          </button>
+          <button class="capability-card" draggable="true" data-capability="css" aria-pressed="false">
+            <span class="capability-tag tag-css">CSS</span>
+            <span class="capability-copy"><strong>CSS Coding</strong><small>Styles, layouts and responsive UI</small></span>
+            <span class="card-add" aria-hidden="true">＋</span>
+          </button>
+          <button class="capability-card" draggable="true" data-capability="javascript" aria-pressed="false">
+            <span class="capability-tag tag-js">JS</span>
+            <span class="capability-copy"><strong>JavaScript</strong><small>Browser logic and interactions</small></span>
+            <span class="card-add" aria-hidden="true">＋</span>
+          </button>
+          <button class="capability-card" draggable="true" data-capability="python" aria-pressed="false">
+            <span class="capability-tag tag-python">PY</span>
+            <span class="capability-copy"><strong>Python</strong><small>Scripts, utilities and explanations</small></span>
+            <span class="card-add" aria-hidden="true">＋</span>
+          </button>
+          <button class="capability-card" draggable="true" data-capability="review" aria-pressed="false">
+            <span class="capability-tag tag-review">QA</span>
+            <span class="capability-copy"><strong>Code Review</strong><small>Find bugs and suggest improvements</small></span>
+            <span class="card-add" aria-hidden="true">＋</span>
+          </button>
+          <button class="capability-card" draggable="true" data-capability="accessibility" aria-pressed="false">
+            <span class="capability-tag tag-a11y">A11Y</span>
+            <span class="capability-copy"><strong>Accessibility</strong><small>Consider keyboard and screen readers</small></span>
+            <span class="card-add" aria-hidden="true">＋</span>
+          </button>
+        </div>
+      </section>
+
+      <div class="sidebar-bottom">
+        <div class="connection-mini">
+          <span class="status-dot" id="sidebarStatusDot"></span>
+          <div><strong id="sidebarStatusText">Backend not checked</strong><small id="sidebarModelText">Configure a connection</small></div>
+          <button class="text-icon-button" id="openSettingsFromStatus" aria-label="Connection settings">···</button>
+        </div>
+        <button class="sidebar-link" id="openSettingsButton"><span class="settings-symbol">⚙</span> Connection settings</button>
+        <div class="sidebar-footnote">Your model runs where you configure it. This interface does not execute model-generated code.</div>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-button mobile-only" id="openSidebar" aria-label="Open sidebar">☰</button>
+          <div><span class="eyebrow">WORKSPACE</span><h1 id="chatTitle">New conversation</h1></div>
+        </div>
+        <div class="topbar-actions">
+          <span class="model-pill"><span class="status-dot" id="topStatusDot"></span><span id="topModelName">Local model</span></span>
+          <button class="subtle-button" id="clearChatButton">Clear chat</button>
+        </div>
+      </header>
+
+      <section class="chat-layout">
+        <div class="chat-scroll" id="chatScroll">
+          <div class="welcome-view" id="welcomeView">
+            <div class="welcome-kicker">A WORKSPACE FOR YOUR LOCAL MODEL</div>
+            <h2>Make something<br><em>with intention.</em></h2>
+            <p>Choose capability cards to tell the model what kind of work you want it to do. Then describe your task.</p>
+            <div class="welcome-prompts">
+              <button class="prompt-card" data-prompt="Create a clean, responsive personal portfolio landing page."><span>01</span><strong>Build a portfolio site</strong><small>HTML · CSS · JavaScript</small></button>
+              <button class="prompt-card" data-prompt="Review this code for bugs, clarity, and accessibility. Explain the highest-priority changes."><span>02</span><strong>Review some code</strong><small>Code quality · Accessibility</small></button>
+              <button class="prompt-card" data-prompt="Explain how to organise a small front-end project into clear files and folders."><span>03</span><strong>Plan a project</strong><small>Structure · Best practices</small></button>
+            </div>
+          </div>
+          <div class="messages" id="messages" aria-live="polite"></div>
+          <div class="typing-row hidden" id="typingRow"><span class="typing-dots"><i></i><i></i><i></i></span><span>Model is thinking</span></div>
+        </div>
+
+        <div class="composer-wrap">
+          <div class="composer" id="composerDropZone">
+            <div class="drop-hint hidden" id="dropHint">Drop a capability card to add it</div>
+            <div class="active-capabilities" id="activeCapabilities" aria-label="Active capabilities">
+              <span class="active-placeholder" id="activePlaceholder">Drop capability cards here, or select them from the sidebar.</span>
+            </div>
+            <textarea id="messageInput" rows="1" placeholder="Message your local model…" aria-label="Message your local model"></textarea>
+            <div class="composer-footer">
+              <div class="composer-note"><span class="lock-symbol">◈</span> Capability instructions are added automatically</div>
+              <div class="composer-controls">
+                <span class="enter-hint">Enter to send · Shift + Enter for a new line</span>
+                <button class="send-button" id="sendButton" aria-label="Send message" disabled><span>Send</span><b>↑</b></button>
+              </div>
+            </div>
+          </div>
+          <div class="workspace-footer">Local Studio can save code blocks to its workspace. It will never run generated code or shell commands.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-card">
+      <div class="modal-header"><div><span class="eyebrow">CONFIGURATION</span><h2 id="settingsTitle">Connection settings</h2></div><button class="icon-button" id="closeSettings" aria-label="Close settings">×</button></div>
+      <div class="modal-body">
+        <label class="field-label" for="backendUrlInput">Studio backend URL</label>
+        <input id="backendUrlInput" class="text-input" type="url" placeholder="http://127.0.0.1:8000" autocomplete="url">
+        <p class="field-help">The address of the Python backend. When the website is hosted on GitHub Pages, this must be an HTTPS-reachable backend address (or a local address reachable from this browser).</p>
+        <label class="field-label" for="accessTokenInput">Studio access token <span class="optional-label">OPTIONAL</span></label>
+        <input id="accessTokenInput" class="text-input" type="password" placeholder="Only required when STUDIO_ACCESS_TOKEN is set" autocomplete="off">
+        <p class="field-help">This token protects your backend when you allow other devices to connect. It is kept in this browser tab's session storage. It is separate from your model API key.</p>
+        <div class="connection-detail"><span class="status-dot" id="modalStatusDot"></span><div><strong id="modalStatusTitle">Not connected</strong><small id="modalStatusDetail">The backend has not been checked.</small></div><button class="outline-button" id="testConnectionButton">Test</button></div>
+        <div class="instruction-box"><strong>Model endpoint</strong><p>The backend connects to an OpenAI-compatible API. Set <code>MODEL_BASE_URL</code>, <code>MODEL_API_KEY</code> and <code>MODEL_NAME</code> in <code>backend/.env</code>. PocketPal's exact server URL depends on the version and serving option you use.</p></div>
+        <div class="privacy-note"><strong>Connection and privacy</strong><p>Chat messages are sent to the backend URL above, then forwarded to the configured model endpoint. Do not connect to a backend you do not trust. The model API key stays in the backend environment file, not in this webpage. Do not expose an unauthenticated backend to the public internet.</p></div>
+      </div>
+      <div class="modal-actions"><button class="subtle-button" id="cancelSettings">Cancel</button><button class="primary-button" id="saveSettingsButton">Save connection</button></div>
+    </div>
+  </div>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+  <script src="assets/app.js" defer></script>
+</body>
+</html>
