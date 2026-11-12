@@ -14,7 +14,7 @@ A starter web interface for chatting with an OpenAI-compatible local model. User
 - Conversation history and selected cards are stored in the current browser's local storage.
 - No shell tool, no code execution, and no automatic file deletion.
 
-## 1. Run locally on Fedora Linux
+## 1. Run locally on Linux
 
 Open a terminal in the extracted project folder:
 
