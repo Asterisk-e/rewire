@@ -1,0 +1,12 @@
+{
+  "name": "local-studio",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Offline-first local AI workspace with in-browser Transformers.js inference.",
+  "scripts": {
+    "prepare:offline": "node tools/prepare-runtime.mjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "3.7.2"
+  }
+}

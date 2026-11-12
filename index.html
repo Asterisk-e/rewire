@@ -3,71 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f7f4">
-  <meta name="description" content="A local-model chat workspace with draggable capability cards.">
-  <title>Local Model Studio</title>
+  <meta name="theme-color" content="#f4f3ed">
+  <meta name="description" content="An offline-first workspace for local AI models.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/styles.css">
+  <title>Local Studio</title>
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
       <div class="brand-row">
-        <div class="brand-mark" aria-hidden="true">LM</div>
-        <div class="brand-copy"><strong>Local Studio</strong><span>Model workspace</span></div>
+        <div class="brand-mark" aria-hidden="true">LS</div>
+        <div class="brand-copy"><strong>Local Studio</strong><span>Private model workspace</span></div>
         <button class="icon-button mobile-only" id="closeSidebar" aria-label="Close sidebar">×</button>
       </div>
 
       <button class="new-chat-button" id="newChatButton"><span class="plus">＋</span> New chat</button>
 
-      <section class="sidebar-section">
-        <div class="section-heading">
-          <span>CAPABILITIES</span>
-          <span class="section-hint">DRAG INTO CHAT</span>
-        </div>
-        <p class="sidebar-intro">Cards add explicit instructions to the next model request. Add only what you need.</p>
+      <section class="sidebar-section model-section">
+        <div class="section-heading"><span>MODELS</span><button class="section-action" id="manageModelsButton">Manage</button></div>
+        <div class="model-list" id="modelList" aria-label="Available models"></div>
+        <p class="sidebar-hint">Switch models without changing your capability cards.</p>
+      </section>
 
+      <section class="sidebar-section capability-section">
+        <div class="section-heading"><span>CAPABILITIES</span><span class="section-hint">DRAG INTO CHAT</span></div>
+        <p class="sidebar-intro">Cards add task-specific instructions. They do not grant system access.</p>
         <div class="capability-list" id="capabilityList">
-          <button class="capability-card" draggable="true" data-capability="html" aria-pressed="false">
-            <span class="capability-tag tag-html">HTML</span>
-            <span class="capability-copy"><strong>HTML Coding</strong><small>Structure and semantic markup</small></span>
-            <span class="card-add" aria-hidden="true">＋</span>
-          </button>
-          <button class="capability-card" draggable="true" data-capability="css" aria-pressed="false">
-            <span class="capability-tag tag-css">CSS</span>
-            <span class="capability-copy"><strong>CSS Coding</strong><small>Styles, layouts and responsive UI</small></span>
-            <span class="card-add" aria-hidden="true">＋</span>
-          </button>
-          <button class="capability-card" draggable="true" data-capability="javascript" aria-pressed="false">
-            <span class="capability-tag tag-js">JS</span>
-            <span class="capability-copy"><strong>JavaScript</strong><small>Browser logic and interactions</small></span>
-            <span class="card-add" aria-hidden="true">＋</span>
-          </button>
-          <button class="capability-card" draggable="true" data-capability="python" aria-pressed="false">
-            <span class="capability-tag tag-python">PY</span>
-            <span class="capability-copy"><strong>Python</strong><small>Scripts, utilities and explanations</small></span>
-            <span class="card-add" aria-hidden="true">＋</span>
-          </button>
-          <button class="capability-card" draggable="true" data-capability="review" aria-pressed="false">
-            <span class="capability-tag tag-review">QA</span>
-            <span class="capability-copy"><strong>Code Review</strong><small>Find bugs and suggest improvements</small></span>
-            <span class="card-add" aria-hidden="true">＋</span>
-          </button>
-          <button class="capability-card" draggable="true" data-capability="accessibility" aria-pressed="false">
-            <span class="capability-tag tag-a11y">A11Y</span>
-            <span class="capability-copy"><strong>Accessibility</strong><small>Consider keyboard and screen readers</small></span>
-            <span class="card-add" aria-hidden="true">＋</span>
-          </button>
+          <button class="capability-card" draggable="true" data-capability="html" aria-pressed="false"><span class="capability-tag tag-html">HTML</span><span class="capability-copy"><strong>HTML Coding</strong><small>Structure and semantic markup</small></span><span class="card-add">＋</span></button>
+          <button class="capability-card" draggable="true" data-capability="css" aria-pressed="false"><span class="capability-tag tag-css">CSS</span><span class="capability-copy"><strong>CSS Coding</strong><small>Styles and responsive layouts</small></span><span class="card-add">＋</span></button>
+          <button class="capability-card" draggable="true" data-capability="javascript" aria-pressed="false"><span class="capability-tag tag-js">JS</span><span class="capability-copy"><strong>JavaScript</strong><small>Browser logic and interaction</small></span><span class="card-add">＋</span></button>
+          <button class="capability-card" draggable="true" data-capability="python" aria-pressed="false"><span class="capability-tag tag-python">PY</span><span class="capability-copy"><strong>Python</strong><small>Scripts and utilities</small></span><span class="card-add">＋</span></button>
+          <button class="capability-card" draggable="true" data-capability="review" aria-pressed="false"><span class="capability-tag tag-review">QA</span><span class="capability-copy"><strong>Code Review</strong><small>Find defects and improvements</small></span><span class="card-add">＋</span></button>
+          <button class="capability-card" draggable="true" data-capability="accessibility" aria-pressed="false"><span class="capability-tag tag-a11y">A11Y</span><span class="capability-copy"><strong>Accessibility</strong><small>Keyboard and assistive technology</small></span><span class="card-add">＋</span></button>
         </div>
       </section>
 
       <div class="sidebar-bottom">
-        <div class="connection-mini">
-          <span class="status-dot" id="sidebarStatusDot"></span>
-          <div><strong id="sidebarStatusText">Backend not checked</strong><small id="sidebarModelText">Configure a connection</small></div>
-          <button class="text-icon-button" id="openSettingsFromStatus" aria-label="Connection settings">···</button>
-        </div>
-        <button class="sidebar-link" id="openSettingsButton"><span class="settings-symbol">⚙</span> Connection settings</button>
-        <div class="sidebar-footnote">Your model runs where you configure it. This interface does not execute model-generated code.</div>
+        <div class="privacy-status"><span class="privacy-indicator"></span><div><strong>Offline workspace</strong><small id="offlineStatus">App shell available on this device</small></div></div>
+        <button class="sidebar-link" id="openSettingsButton"><span class="sidebar-link-icon">⚙</span> Settings & connections</button>
+        <div class="sidebar-footnote">Model files stay on this device when using Browser Model mode. No cloud account is required.</div>
       </div>
     </aside>
 
@@ -75,10 +51,10 @@
       <header class="topbar">
         <div class="topbar-left">
           <button class="icon-button mobile-only" id="openSidebar" aria-label="Open sidebar">☰</button>
-          <div><span class="eyebrow">WORKSPACE</span><h1 id="chatTitle">New conversation</h1></div>
+          <div><span class="eyebrow">LOCAL WORKSPACE</span><h1 id="chatTitle">New conversation</h1></div>
         </div>
         <div class="topbar-actions">
-          <span class="model-pill"><span class="status-dot" id="topStatusDot"></span><span id="topModelName">Local model</span></span>
+          <div class="selected-model-label"><span class="model-presence-dot"></span><span id="topModelName">Choose a model</span><small id="topModelKind">No model selected</small></div>
           <button class="subtle-button" id="clearChatButton">Clear chat</button>
         </div>
       </header>
@@ -86,59 +62,113 @@
       <section class="chat-layout">
         <div class="chat-scroll" id="chatScroll">
           <div class="welcome-view" id="welcomeView">
-            <div class="welcome-kicker">A WORKSPACE FOR YOUR LOCAL MODEL</div>
-            <h2>Make something<br><em>with intention.</em></h2>
-            <p>Choose capability cards to tell the model what kind of work you want it to do. Then describe your task.</p>
-            <div class="welcome-prompts">
-              <button class="prompt-card" data-prompt="Create a clean, responsive personal portfolio landing page."><span>01</span><strong>Build a portfolio site</strong><small>HTML · CSS · JavaScript</small></button>
-              <button class="prompt-card" data-prompt="Review this code for bugs, clarity, and accessibility. Explain the highest-priority changes."><span>02</span><strong>Review some code</strong><small>Code quality · Accessibility</small></button>
-              <button class="prompt-card" data-prompt="Explain how to organise a small front-end project into clear files and folders."><span>03</span><strong>Plan a project</strong><small>Structure · Best practices</small></button>
+            <div class="welcome-orbit" aria-hidden="true"><span></span><i></i><b></b></div>
+            <div class="welcome-kicker">YOUR MODELS. YOUR DEVICE. YOUR WORK.</div>
+            <h2>Think locally.<br><em>Build freely.</em></h2>
+            <p>Load compatible models into this browser, or connect to a local inference server. Your prompts and model files can remain on your device.</p>
+            <div class="welcome-actions">
+              <button class="welcome-action primary-welcome" id="welcomeAddModel"><span>＋</span><strong>Add a local model</strong><small>Use a downloaded ONNX model</small></button>
+              <button class="welcome-action" id="welcomeConnect"><span>↗</span><strong>Connect a local server</strong><small>Use an OpenAI-compatible endpoint</small></button>
             </div>
+            <div class="welcome-footnote"><span class="tiny-check">✓</span> Offline after setup · Browser inference · Local speech tools</div>
           </div>
           <div class="messages" id="messages" aria-live="polite"></div>
-          <div class="typing-row hidden" id="typingRow"><span class="typing-dots"><i></i><i></i><i></i></span><span>Model is thinking</span></div>
+          <div class="typing-row hidden" id="typingRow"><span class="typing-dots"><i></i><i></i><i></i></span><span id="typingText">Model is thinking</span></div>
         </div>
 
         <div class="composer-wrap">
           <div class="composer" id="composerDropZone">
             <div class="drop-hint hidden" id="dropHint">Drop a capability card to add it</div>
-            <div class="active-capabilities" id="activeCapabilities" aria-label="Active capabilities">
-              <span class="active-placeholder" id="activePlaceholder">Drop capability cards here, or select them from the sidebar.</span>
-            </div>
+            <div class="active-capabilities" id="activeCapabilities" aria-label="Active capabilities"><span class="active-placeholder" id="activePlaceholder">Drop capability cards here, or select them from the sidebar.</span></div>
             <textarea id="messageInput" rows="1" placeholder="Message your local model…" aria-label="Message your local model"></textarea>
             <div class="composer-footer">
-              <div class="composer-note"><span class="lock-symbol">◈</span> Capability instructions are added automatically</div>
-              <div class="composer-controls">
-                <span class="enter-hint">Enter to send · Shift + Enter for a new line</span>
-                <button class="send-button" id="sendButton" aria-label="Send message" disabled><span>Send</span><b>↑</b></button>
+              <div class="composer-tools">
+                <button class="round-send-button" id="sendButton" aria-label="Send message" title="Send message" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6.5 10.5 12 5l5.5 5.5"/></svg></button>
+                <div class="voice-control-wrap">
+                  <button class="tool-button" id="voiceButton" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-4 0h8"/></svg><span>Voice</span><span class="tiny-chevron">⌄</span></button>
+                  <div class="voice-menu hidden" id="voiceMenu">
+                    <button class="voice-menu-item" id="transcribeModeButton"><span class="voice-mode-icon">Aa</span><span><strong>Transcribe</strong><small>Speech becomes text in the composer</small></span></button>
+                    <button class="voice-menu-item" id="voiceModeButton"><span class="voice-mode-icon voice-wave">◖</span><span><strong>Voice</strong><small>Talk to the model; hear its reply</small></span></button>
+                    <div class="voice-menu-note" id="voiceModelStatus">Local speech model not configured</div>
+                  </div>
+                </div>
+                <label class="wire-control" for="wireStrengthSelect"><span class="wire-symbol">⌁</span><span>Wire strength</span><select id="wireStrengthSelect" aria-label="Wire strength"><option value="0.3">0.3 · Low</option><option value="0.5">0.5 · Quick</option><option value="1" selected>1 · Normal</option><option value="2">2 · Medium</option><option value="3">3 · High</option><option value="4">4 · Very High</option><option value="5">5 · Extreme</option></select></label>
               </div>
+              <div class="composer-status"><span id="composerStatusText">Ready when you are</span><span class="composer-status-dot"></span></div>
             </div>
           </div>
-          <div class="workspace-footer">Local Studio can save code blocks to its workspace. It will never run generated code or shell commands.</div>
+          <div class="workspace-footer"><span>Local Studio does not execute generated code.</span><span id="runtimeFooter">Browser models need local model files and a prepared runtime.</span></div>
         </div>
       </section>
     </main>
   </div>
 
+  <!-- Model manager -->
+  <div class="modal-backdrop hidden" id="modelsModal" role="dialog" aria-modal="true" aria-labelledby="modelsTitle">
+    <div class="modal-card modal-wide">
+      <div class="modal-header"><div><span class="eyebrow">MODEL LIBRARY</span><h2 id="modelsTitle">Manage models</h2><p class="modal-subtitle">Add several local models and switch between them whenever you need.</p></div><button class="icon-button" id="closeModels" aria-label="Close model manager">×</button></div>
+      <div class="modal-body">
+        <div class="model-tabs"><button class="model-tab active" data-tab="browser">Browser models</button><button class="model-tab" data-tab="server">Local server models</button></div>
+        <section id="browserModelPanel" class="model-panel">
+          <div class="form-grid">
+            <div><label class="field-label" for="browserModelName">Display name</label><input id="browserModelName" class="text-input" placeholder="e.g. Qwen 2.5 0.5B"></div>
+            <div><label class="field-label" for="browserModelPath">Model folder</label><input id="browserModelPath" class="text-input" placeholder="e.g. qwen2.5-0.5b-instruct"></div>
+          </div>
+          <p class="field-help">The folder must already exist inside <code>models/</code> and contain a Transformers.js-compatible ONNX model, tokenizer and configuration. Model folders are not downloaded by the app.</p>
+          <div class="inline-actions"><button class="primary-button" id="addBrowserModelButton">Add folder from models/</button><button class="outline-button" id="importModelFolderButton">Import folder from device</button><input id="modelFilesInput" type="file" webkitdirectory directory multiple hidden><span class="inline-hint" id="browserRuntimeState">Checking browser runtime…</span></div>
+          <p class="field-help">For GitHub Pages or a static site, use Import folder from device. The model files are copied into this browser's origin-scoped cache and are not uploaded to GitHub.</p>
+          <div class="model-library-list" id="browserModelLibrary"></div>
+        </section>
+        <section id="serverModelPanel" class="model-panel hidden">
+          <label class="field-label" for="serverBaseUrl">Local OpenAI-compatible server URL</label><input id="serverBaseUrl" class="text-input" placeholder="http://127.0.0.1:1234/v1">
+          <label class="field-label" for="serverApiKey">API key <span class="optional-label">OPTIONAL · STORED LOCALLY</span></label><input id="serverApiKey" class="text-input" type="password" placeholder="Leave blank if not required" autocomplete="off">
+          <div class="inline-actions"><button class="primary-button" id="addServerButton">Discover server models</button><span class="inline-hint" id="serverModelState">Server connections must remain on your local device or network for offline use.</span></div>
+          <div class="model-library-list" id="serverModelLibrary"></div>
+        </section>
+        <div class="model-info-box"><strong>Offline model setup</strong><p>Install the browser runtime once, then put compatible model files under <code>models/</code>. The app disables remote model downloads. A first-time model setup requires obtaining the runtime and model files while online; inference itself runs locally.</p></div>
+      </div>
+      <div class="modal-actions"><button class="subtle-button" id="closeModelsFooter">Done</button></div>
+    </div>
+  </div>
+
+  <!-- Settings -->
   <div class="modal-backdrop hidden" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <div class="modal-card">
-      <div class="modal-header"><div><span class="eyebrow">CONFIGURATION</span><h2 id="settingsTitle">Connection settings</h2></div><button class="icon-button" id="closeSettings" aria-label="Close settings">×</button></div>
+      <div class="modal-header"><div><span class="eyebrow">PREFERENCES</span><h2 id="settingsTitle">Settings</h2><p class="modal-subtitle">Local storage, voice and connection preferences.</p></div><button class="icon-button" id="closeSettings" aria-label="Close settings">×</button></div>
       <div class="modal-body">
-        <label class="field-label" for="backendUrlInput">Studio backend URL</label>
-        <input id="backendUrlInput" class="text-input" type="url" placeholder="http://127.0.0.1:8000" autocomplete="url">
-        <p class="field-help">The address of the Python backend. When the website is hosted on GitHub Pages, this must be an HTTPS-reachable backend address (or a local address reachable from this browser).</p>
-        <label class="field-label" for="accessTokenInput">Studio access token <span class="optional-label">OPTIONAL</span></label>
-        <input id="accessTokenInput" class="text-input" type="password" placeholder="Only required when STUDIO_ACCESS_TOKEN is set" autocomplete="off">
-        <p class="field-help">This token protects your backend when you allow other devices to connect. It is kept in this browser tab's session storage. It is separate from your model API key.</p>
-        <div class="connection-detail"><span class="status-dot" id="modalStatusDot"></span><div><strong id="modalStatusTitle">Not connected</strong><small id="modalStatusDetail">The backend has not been checked.</small></div><button class="outline-button" id="testConnectionButton">Test</button></div>
-        <div class="instruction-box"><strong>Model endpoint</strong><p>The backend connects to an OpenAI-compatible API. Set <code>MODEL_BASE_URL</code>, <code>MODEL_API_KEY</code> and <code>MODEL_NAME</code> in <code>backend/.env</code>. PocketPal's exact server URL depends on the version and serving option you use.</p></div>
-        <div class="privacy-note"><strong>Connection and privacy</strong><p>Chat messages are sent to the backend URL above, then forwarded to the configured model endpoint. Do not connect to a backend you do not trust. The model API key stays in the backend environment file, not in this webpage. Do not expose an unauthenticated backend to the public internet.</p></div>
+        <div class="settings-section-title">Speech models</div>
+        <label class="field-label" for="speechModelPath">Local transcription model folder</label><input id="speechModelPath" class="text-input" placeholder="e.g. whisper-tiny.en">
+        <p class="field-help">Put a compatible Whisper ONNX model in <code>models/</code>. Both Transcribe and Voice modes use this local speech model. Microphone audio is processed in this browser.</p>
+        <div class="settings-divider"></div>
+        <div class="settings-section-title">Browser inference</div>
+        <label class="check-row"><input id="preferWebGpu" type="checkbox" checked><span><strong>Prefer WebGPU acceleration</strong><small>Falls back to WebAssembly when WebGPU is unavailable or unsupported.</small></span></label>
+        <div class="model-info-box"><strong>Offline model cache</strong><p>The service worker caches model and runtime files when first loaded. Large models may exceed browser storage quotas; keep the model folders in <code>models/</code> as your local source copy.</p></div>
+        <div class="settings-divider"></div>
+        <div class="settings-section-title">Local Studio backend</div>
+        <label class="field-label" for="backendUrlInput">Backend URL <span class="optional-label">OPTIONAL</span></label><input id="backendUrlInput" class="text-input" type="url" placeholder="http://127.0.0.1:8000">
+        <label class="field-label" for="accessTokenInput">Studio access token <span class="optional-label">OPTIONAL</span></label><input id="accessTokenInput" class="text-input" type="password" placeholder="Only if backend authentication is enabled" autocomplete="off">
+        <div class="connection-detail"><span class="status-dot" id="modalStatusDot"></span><div><strong id="modalStatusTitle">Backend not checked</strong><small id="modalStatusDetail">Browser models do not need the backend.</small></div><button class="outline-button" id="testConnectionButton">Test</button></div>
+        <div class="privacy-note"><strong>Privacy</strong><p>Browser models and local speech processing run on this device. Local server models receive prompts only at the server URL you add. No third-party analytics, font services or cloud model endpoints are built into this app.</p></div>
       </div>
-      <div class="modal-actions"><button class="subtle-button" id="cancelSettings">Cancel</button><button class="primary-button" id="saveSettingsButton">Save connection</button></div>
+      <div class="modal-actions"><button class="subtle-button" id="cancelSettings">Cancel</button><button class="primary-button" id="saveSettingsButton">Save settings</button></div>
+    </div>
+  </div>
+
+  <!-- Voice session overlay -->
+  <div class="voice-overlay hidden" id="voiceOverlay" role="dialog" aria-modal="true" aria-labelledby="voiceOverlayTitle">
+    <div class="voice-session-card">
+      <button class="icon-button voice-close" id="closeVoiceSession" aria-label="Close voice session">×</button>
+      <div class="voice-session-eyebrow">LOCAL VOICE SESSION</div>
+      <div class="voice-orb" id="voiceOrb"><span></span><i></i></div>
+      <h2 id="voiceOverlayTitle">Talk to your model</h2>
+      <p id="voiceSessionText">Press the microphone to speak. The local speech model will transcribe your words.</p>
+      <div class="voice-transcript" id="voiceTranscript">Your conversation will appear here.</div>
+      <div class="voice-session-actions"><button class="voice-record-button" id="voiceRecordButton"><span class="record-dot"></span><span id="voiceRecordLabel">Start speaking</span></button><button class="outline-button" id="endVoiceSession">End session</button></div>
+      <div class="voice-session-footnote">Voice requires microphone permission, a local transcription model and a selected chat model. Spoken replies use installed system voices.</div>
     </div>
   </div>
 
   <div class="toast-region" id="toastRegion" aria-live="polite"></div>
-  <script src="assets/app.js" defer></script>
+  <script type="module" src="assets/app.js"></script>
 </body>
 </html>

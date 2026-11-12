@@ -1,22 +1,28 @@
-# Local Studio
+# Local Studio 2.0
 
-A starter web interface for chatting with an OpenAI-compatible local model. Users can drag capability cards into the composer to add task-specific instructions to the model's system prompt. The Python backend keeps those instructions out of the visible chat transcript and forwards requests to the configured model endpoint.
+Local Studio is an offline-first chat workspace for local AI models. It supports two inference routes:
 
-## Included
+1. **Browser models:** compatible Hugging Face Transformers.js / ONNX models run inside the browser using WebGPU when supported, otherwise WebAssembly. Prompts, audio and inference stay in the browser. Remote model downloads are disabled.
+2. **Local server models:** connect to one or more OpenAI-compatible inference servers on the same device or trusted private LAN. Examples include local inference applications that expose `/v1/models` and `/v1/chat/completions`.
 
-- Claude-inspired two-column chat workspace.
-- Drag-and-drop and click-to-toggle capability cards: HTML, CSS, JavaScript, Python, Code Review, and Accessibility.
-- Capability instructions are added server-side to the system prompt for each request.
-- OpenAI-compatible chat-completions connector with configurable URL, model name, and API key.
-- Connection settings for the Studio backend URL and an optional Studio access token.
-- Code-block rendering with an explicit **Save to workspace** action.
-- Restricted text workspace: files are saved only after a user action, within `workspace/`, and only for a small allowlist of file extensions.
-- Conversation history and selected cards are stored in the current browser's local storage.
-- No shell tool, no code execution, and no automatic file deletion.
+The app also includes draggable capability cards, multi-model selection, adjustable Wire Strength, local Whisper-style speech transcription, voice conversation mode, a PWA app-shell cache, and explicit code-file saving.
 
-## 1. Run locally on Linux
+## What “offline” means
 
-Open a terminal in the extracted project folder:
+The application itself makes no calls to cloud AI services, analytics services, remote font providers or external asset CDNs. Browser inference uses local model files and a locally prepared copy of the Transformers.js runtime. The service worker caches the app shell and model/runtime files as they are first used.
+
+A fresh installation still needs a **one-time preparation step** while online (or with dependencies copied in from another machine):
+
+- Install the Python packages listed in `backend/requirements.txt`.
+- Install the browser runtime dependency with `npm install`, then run `npm run prepare:offline`.
+- Obtain compatible ONNX model files and copy them into `models/`.
+- Obtain a compatible speech-recognition model if you want Transcribe or Voice mode.
+
+After those pieces are installed, browser inference and local speech transcription can operate without internet. Model files are intentionally not bundled: they are large, and model licences differ. Read each model's licence before using or redistributing it.
+
+## 1. Run on Fedora Linux
+
+Extract the ZIP, open a terminal in the `local-model-studio` folder, and prepare the Python backend:
 
 ```bash
 python3 -m venv .venv
@@ -26,130 +32,189 @@ python -m pip install -r backend/requirements.txt
 cp backend/.env.example backend/.env
 ```
 
-Edit `backend/.env` and configure the model endpoint:
+Prepare the browser runtime while internet is available:
 
-```dotenv
-MODEL_BASE_URL=http://127.0.0.1:PORT/v1
-MODEL_API_KEY=
-MODEL_NAME=the-model-id-served-by-your-api
+```bash
+npm install
+npm run prepare:offline
 ```
 
-Replace the example host, port, and model ID with the values provided by the local inference server you are using. `MODEL_BASE_URL` must be the API base URL and should end in `/v1`; do not append `/chat/completions`.
+Keep the generated `vendor/` files. They are required for browser inference while offline. The dependency installation step is only for preparing this local runtime; the running app does not load JavaScript from a CDN.
 
 Start Local Studio:
 
 ```bash
+source .venv/bin/activate
 uvicorn backend.main:app --host 127.0.0.1 --port 8000
 ```
 
-Open <http://127.0.0.1:8000> in your browser. The site and API are served by the same local process.
+Open <http://127.0.0.1:8000>. Keep this local server running while you use the app. The same local server serves the frontend, model files and workspace API.
 
-To stop the server, press `Ctrl+C` in the terminal.
+To stop it, press `Ctrl+C` in the terminal.
 
-## 2. Connect PocketPal
+## 2. Run a model directly in the browser
 
-Local Studio currently uses the **OpenAI-compatible chat-completions API shape**:
+Local Studio uses the Hugging Face Transformers.js browser runtime. It does not download a model automatically and does not contact the Hugging Face Hub at runtime.
 
-- `GET {MODEL_BASE_URL}/models`
-- `POST {MODEL_BASE_URL}/chat/completions`
+### Model file layout
 
-PocketPal's availability and exact URL depend on the PocketPal version and whether that version exposes a local or network server. Do not assume that a model being loaded in PocketPal automatically means an HTTP API is available.
+Create a directory under `models/` for each compatible model. For example:
 
-If your PocketPal version exposes an OpenAI-compatible server, set `MODEL_BASE_URL` to that server's base URL and set `MODEL_NAME` to the model ID it serves. Restart the Local Studio backend after changing `backend/.env`.
-
-If PocketPal does not expose a compatible endpoint, this project will need a separate supported bridge or inference server. The frontend does not bypass PocketPal's app permissions or communicate with its private app storage.
-
-## 3. Host the frontend on GitHub Pages
-
-GitHub Pages can host the static interface, but it cannot run the Python backend. Keep the `backend/` service running separately on a device or server that can reach your model.
-
-1. Create a GitHub repository and upload the contents of this project.
-2. In the repository's **Settings → Pages**, choose the branch and folder containing `index.html`.
-3. Wait for GitHub Pages to publish the site.
-4. Run the Python backend on the device that can reach the model API.
-5. In `backend/.env`, set `CORS_ORIGINS` to the exact origin of your GitHub Pages site. For example:
-
-   ```dotenv
-   CORS_ORIGINS=https://YOUR-USERNAME.github.io
-   ```
-
-   If your site is `https://YOUR-USERNAME.github.io/YOUR-REPOSITORY/`, the origin is still `https://YOUR-USERNAME.github.io` (no repository path).
-
-6. For a public or cross-network website, make the backend available through **HTTPS** using a properly secured reverse proxy or private access solution. Browsers generally block an HTTPS GitHub Pages site from calling an ordinary HTTP server on another device.
-7. Set a long random `STUDIO_ACCESS_TOKEN` in `backend/.env`, restart the backend, then open **Connection settings** in the website. Enter the backend's HTTPS URL and the same Studio access token, then press **Test**.
-
-Do not expose the backend directly to the public internet without HTTPS and an access token. The token protects API access; it does not replace network-level security or rate limiting.
-
-## 4. Use from another device on your local network
-
-For a temporary private-LAN setup, the backend must listen on a network interface:
-
-```bash
-uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```text
+models/
+  qwen-instruct/
+    config.json
+    tokenizer.json
+    tokenizer_config.json
+    generation_config.json
+    onnx/
+      model.onnx
 ```
 
-Then:
+The precise files vary by model. Use a repository/export that provides **Transformers.js-compatible ONNX weights**. Standard PyTorch `.safetensors` or `.bin` weights alone are not enough for this browser runtime. Some model exports use different ONNX filenames or subfolders; preserve the model's folder structure.
 
-- Set `STUDIO_ACCESS_TOKEN` to a long random value.
-- Set `CORS_ORIGINS` to the exact website origin (or the exact local origin used by the browser).
-- Allow the backend port through the host firewall only on the trusted private network.
-- In the browser on the other device, open the website and enter the backend device's LAN address, such as `http://192.168.x.x:8000`, plus the access token.
+### Register the model
 
-This plain-HTTP LAN option is for a trusted private network only. It is not suitable for a public website. If the page itself is hosted on GitHub Pages over HTTPS, use an HTTPS backend address instead.
+1. Start Local Studio or open the installed/cached PWA.
+2. Select **Manage** beside Models.
+3. Under **Browser models**, choose **Import folder from device** and select the model directory. The browser copies the files into its origin-scoped Cache Storage under the app's origin; files are not uploaded to GitHub or another server.
+4. The imported model is registered automatically. Select it from the sidebar.
 
-## 5. Configuration reference
+For a model folder already present under the project's `models/` directory, enter its display name and folder name, then choose **Add folder from models/** instead. The import option is especially useful with GitHub Pages: model weights do not need to be committed to the repository.
 
-| Variable | Purpose |
-|---|---|
-| `MODEL_BASE_URL` | OpenAI-compatible API base URL ending in `/v1` |
-| `MODEL_API_KEY` | Optional model-server API key; stored on the backend only |
-| `MODEL_NAME` | Model ID expected by the inference API |
-| `STUDIO_ACCESS_TOKEN` | Optional bearer token protecting the Studio API; strongly recommended beyond localhost |
-| `CORS_ORIGINS` | Comma-separated list of allowed browser origins |
-| `WORKSPACE_DIR` | Optional path for user-saved code files; defaults to `./workspace` |
+The first load can take time because the browser must read and initialise the model. Large models may exceed the memory or storage available to your browser. Start with a small instruction-tuned ONNX model. WebGPU acceleration is preferred when enabled and available; Local Studio falls back to WebAssembly where it can.
 
-After changing `backend/.env`, restart Uvicorn for the changes to take effect.
+### Offline caching
+
+The service worker caches `/vendor/` runtime assets and `/models/` assets when the browser first fetches them. When you import a folder from your device, the model files are placed directly into the same local browser cache so a GitHub Pages frontend can load them without committing weights to Git. Browser cache quota varies by browser and device. Keep a backup of the original model files because clearing site data removes the browser's imported copy.
+
+## 3. Multiple local API models
+
+There are two ways to use local API models.
+
+### Add directly in the browser
+
+1. Open **Manage → Local server models**.
+2. Enter the local inference server's base URL, ending in `/v1` (for example `http://127.0.0.1:1234/v1`).
+3. Add an API key only if your local server requires one.
+4. Select **Discover server models**.
+5. Select any discovered model from the sidebar.
+
+The browser sends prompts directly to that endpoint. The endpoint must allow requests from the Local Studio page through CORS. This route is suitable for localhost and trusted private-LAN model servers. A local endpoint may not be reachable from a GitHub Pages-hosted HTTPS page because of browser mixed-content and private-network restrictions; for the simplest setup, run the frontend and model server on the same device or use the local FastAPI-hosted page.
+
+### Configure several models through the Python backend
+
+Edit `backend/.env` and set `MODEL_PROFILES_JSON` to a JSON array. Example:
+
+```dotenv
+MODEL_PROFILES_JSON=[{"id":"qwen","name":"Qwen local","base_url":"http://127.0.0.1:1234/v1","model":"qwen-local","api_key":""},{"id":"llama","name":"Llama local","base_url":"http://127.0.0.1:8080/v1","model":"llama-local","api_key":""}]
+```
+
+`MODEL_PROFILES_JSON` takes precedence over the single-model variables. Restart Uvicorn after editing `.env`. Configured profiles appear in the model list automatically.
+
+Legacy single-model configuration is still supported:
+
+```dotenv
+MODEL_BASE_URL=http://127.0.0.1:1234/v1
+MODEL_API_KEY=
+MODEL_NAME=local-model
+```
+
+Do not put cloud API endpoints in these settings if you require offline operation. API keys stored in the browser model manager are held in that browser's local storage; use this only on a device and browser profile you control.
+
+## 4. Voice and transcription
+
+Local Studio provides two modes:
+
+- **Transcribe:** record speech, transcribe it with a local model, and place the text in the composer. The user can edit it before sending.
+- **Voice:** record one utterance, transcribe it locally, send it to the selected chat model, then speak the response using an installed local system voice. Repeat for the next turn.
+
+This is turn-based voice chat rather than continuous full-duplex audio. It does not use cloud speech recognition. The microphone requires browser permission and a secure context (localhost is treated as secure by modern browsers).
+
+To enable speech:
+
+1. Obtain a compatible Transformers.js ONNX speech-recognition model (such as a Whisper export) with its tokenizer and configuration.
+2. Put it in its own folder under `models/`.
+3. Open **Settings** and enter that folder name in **Local transcription model folder**.
+4. Open **Voice → Transcribe** or **Voice → Voice**.
+
+Voice responses use the browser's speech synthesis interface, but Local Studio selects only a voice marked as a local system voice. Availability depends on the OS and installed offline voice packs. If no local voice is available, text responses still work, but spoken output is unavailable until an offline voice pack is installed.
+
+Audio is recorded in the browser and decoded locally before being passed to the selected speech model. It is not uploaded by Local Studio.
+
+## 5. Wire Strength
+
+Wire Strength changes the system instruction and generation limits sent to the selected model. It is a prompt/generation preset, not a guarantee that the model has more compute or better reasoning. A small model may not benefit much from high settings.
+
+| Value | Preset | Intended behaviour |
+|---:|---|---|
+| 0.3 | Low | Quickest, shortest useful answers |
+| 0.5 | Quick | Simple, short answers with essential context |
+| 1 | Normal | Balanced reasoning and detail |
+| 2 | Medium | More careful refinement, approximately Normal response length |
+| 3 | High | More validation, edge-case checks and somewhat longer responses |
+| 4 | Very High | More structured, complete and refined responses |
+| 5 | Extreme | Strongest available refinement, more comprehensive output and checks |
+
+Because the app is offline, High and above cannot perform live internet research. They can only analyse the prompt, conversation and tools/data made available locally. The model should not expose private chain-of-thought; it should provide conclusions and concise rationale.
 
 ## 6. Capability cards
 
-The built-in cards are defined in two places:
+The cards (HTML, CSS, JavaScript, Python, Code Review and Accessibility) add task-specific instructions to the model's system prompt. They do not grant new abilities or filesystem access. The backend validates capability IDs when using the backend API; browser model prompts are assembled in the browser.
 
-- `assets/app.js`: labels and presentation in the browser.
-- `backend/main.py`: trusted capability instructions that are inserted into the system message.
+## 7. Saving generated code
 
-When adding a new card, add a matching ID and instruction in both places. The backend accepts only IDs in its allowlist; the browser cannot send arbitrary system instructions.
+Code blocks have an explicit **Save code** action. When the local backend is connected, files are written under `workspace/` after the user chooses a path and confirms any overwrite. Without the backend, the browser downloads the code as a text file. Generated code is never executed. The backend rejects absolute paths, traversal, hidden paths, symlinks and file extensions outside its allowlist.
 
-These cards guide the model; they do not grant new abilities. For example, the HTML card does not itself give the model filesystem access. File saving is a separate, explicit user action performed by the website.
+## 8. GitHub Pages and offline use
 
-## 7. Workspace safety
+GitHub Pages can host the static frontend, but it cannot run FastAPI. It can serve the cached PWA shell and runtime. Use **Import folder from device** to copy model weights from the device into that browser's private cache without publishing them in the repository. The first visit and runtime setup must happen while online; model imports are local and can then be used offline. Clearing the browser's site data removes the imported models.
 
-Generated code is displayed as text. The application does not execute it, run shell commands, or automatically alter existing files. A user must press **Save to workspace** and confirm replacement of an existing file. The backend rejects absolute paths, parent-directory traversal, hidden paths, symlinks, and file extensions outside its allowlist. There is no file-delete endpoint.
+For fully local inference on Fedora, the recommended arrangement is to run Local Studio at `http://127.0.0.1:8000`. You can also use the static GitHub Pages frontend after its first visit, provided you have prepared the runtime, imported the models on that device, and the browser has retained its app/model caches.
 
-The workspace is not a security boundary against a person who already has operating-system access to the machine. Do not use it to store secrets.
+## 9. Security and privacy notes
 
-## Troubleshooting
+- No cloud model API or external asset CDN is configured by default.
+- Local server models should use `localhost` or a trusted private network.
+- The Studio bearer token protects backend routes but does not replace a firewall or secure network configuration.
+- Browser API keys added in the model manager are stored locally in the browser profile; do not use this with a shared browser account.
+- Model files are untrusted code/data. Use reputable model exports and read their licences.
+- The workspace is not a security boundary against another person who already has OS access to the device.
+- Local Studio does not provide a terminal tool or execute model-generated code.
 
-- **Backend unavailable:** Check that Uvicorn is running and that the website's backend URL is correct.
-- **CORS error:** Add the exact webpage origin to `CORS_ORIGINS`, restart Uvicorn, and reload the page.
-- **401 response:** Enter the same `STUDIO_ACCESS_TOKEN` configured in `backend/.env`.
-- **Model endpoint not configured:** Set `MODEL_BASE_URL` in `backend/.env` and restart Uvicorn.
-- **Model endpoint error:** Verify that the endpoint exposes `/chat/completions`, that the model ID is correct, and that any required API key is configured.
-- **GitHub Pages cannot reach a local HTTP backend:** Use the locally hosted frontend for local development, or provide a reachable HTTPS backend for the published site.
-
-## Project layout
+## Project structure
 
 ```text
 local-model-studio/
 ├── index.html
+├── manifest.webmanifest
+├── service-worker.js
 ├── assets/
 │   ├── app.js
-│   └── styles.css
+│   ├── styles.css
+│   └── favicon.svg
 ├── backend/
 │   ├── main.py
 │   ├── requirements.txt
 │   └── .env.example
+├── models/
+│   └── README.md
+├── vendor/                 # Created by npm run prepare:offline
+├── tools/
+│   └── prepare-runtime.mjs
+├── package.json
 ├── workspace/
-│   └── .gitkeep
-├── .gitignore
 └── README.md
 ```
+
+## Troubleshooting
+
+- **Browser runtime missing:** run `npm install` and `npm run prepare:offline`, then reload.
+- **Model folder not found:** check its spelling and that it exists beneath `models/`.
+- **Unsupported model:** the folder needs a Transformers.js-compatible ONNX export; ordinary PyTorch checkpoints do not load directly.
+- **WebGPU failure:** turn off Prefer WebGPU in Settings or allow the fallback to WebAssembly. Some devices/browsers cannot run all model architectures.
+- **Not enough memory:** use a smaller or more quantised model and close other tabs.
+- **No transcription:** check the speech-model folder, browser microphone permission and model compatibility.
+- **Voice replies are silent:** install an offline OS voice pack; Local Studio intentionally avoids non-local voices.
+- **Local server discovery fails:** check the `/v1/models` endpoint, CORS settings and whether the endpoint is on localhost/private LAN.
+- **No backend models appear:** check `backend/.env`, restart Uvicorn, then reload the app.

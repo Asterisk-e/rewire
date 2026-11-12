@@ -1,0 +1,13 @@
+{
+  "name": "Local Studio",
+  "short_name": "Local Studio",
+  "description": "An offline-first workspace for local AI models.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f3ed",
+  "theme_color": "#f4f3ed",
+  "icons": [
+    { "src": "assets/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
